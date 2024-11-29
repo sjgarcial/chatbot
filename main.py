@@ -1,8 +1,8 @@
-# from fastapi import FastAPI
-# from pydantic import BaseModel
-# import random
+# from fastapi import FastAPI 
+# from pydantic import BaseModel 
+# from typing import List 
 
-# app = FastAPI()
+# app = FastAPI() #Instancia de la aplicación FastAPI, especifica un recurso particular de un servidor
 
 # # Diccionario de categorías con palabras clave y respuestas
 # categorias = {
@@ -121,60 +121,60 @@
 #     else:
 #         return {"mensaje": "¿En qué más puedo ayudarte? Puede registrarse o listar usuarios."}
 
-import pandas as pd
-from fastapi import FastAPI
-from pydantic import BaseModel
-from typing import List
+import pandas as pd #Biblioteca para manejar hojas de cálculo Excel, sirve para cargar, manipular y guardar datos
+from fastapi import FastAPI #Herramienta pydantic para validar y estructurar datos, se usa para definir el modelo de datos que manejará la API
+from pydantic import BaseModel #define una lista en Python 
+from typing import List #Se usa para representar múltiples elementos, como enfermedades
 
-app = FastAPI()
+app = FastAPI() #Contiene los endpoints y toda la lógica de la API.
 
 # Ruta del archivo Excel donde se guardarán los datos
-DATABASE_PATH = "usuarios_db.xlsx"
+DATABASE_PATH = "usuarios_db.xlsx" # Especifica la ruta del archivo Excel donde se almacenarán los datos de los usuarios. Si no existe, se crea uno nuevo más adelante.
 
 # Modelo de datos del usuario
-class Usuario(BaseModel):
-    nombre: str
-    edad: int
-    enfermedades: List[str]
+class Usuario(BaseModel): #Modelo que define la estructura de los datos de un usuario
+    nombre: str #Nombre del usuario (cadena de texto)
+    edad: int #Edad del usuario (entero).
+    enfermedades: List[str] #Lista de enfermedades asociadas al usuario (lista de cadenas).
 
 # Función para cargar datos desde Excel
-def cargar_datos():
-    try:
+def cargar_datos(): #Intenta cargar el archivo en Excel en un "DataFrame"(crea una tabla de datos en filas y en columnas)
+    try: #maneja errores o excepciones que existen durante la ejecución del programa
         # Leer el archivo Excel
-        return pd.read_excel(DATABASE_PATH)
-    except FileNotFoundError:
-        # Si el archivo no existe, crear un DataFrame vacío
+        return pd.read_excel(DATABASE_PATH) #Guarda el "DataFrame" en el archivo Excel especificado por "DATABASE_PATH" (ubicación o ruta del archivo que actúa como base de datos)
+    except FileNotFoundError: #Si el archivo no está en la ruta especificada, maneja una excepción, que se produce cuando intentas acceder a un archivo que no existe en la ruta especificada
+        # Si el archivo no existe, crear un "DataFrame" (tabla de datos)vacío con las columnas esperadas: nombre, edad, y enfermedades.
         return pd.DataFrame(columns=["nombre", "edad", "enfermedades"])
 
 # Función para guardar datos en Excel
-def guardar_datos(data):
-    data.to_excel(DATABASE_PATH, index=False)
+def guardar_datos(data): #Guardar en un "DataFrame"(tabla de datos en excel un archivo fisico)
+    data.to_excel(DATABASE_PATH, index=False) #Permite exportar el contenido a una ruta donde se guardan los datos y evita columnas no deseadas
 
 # Cargar la base de datos al iniciar la aplicación
-usuarios_df = cargar_datos()
+usuarios_df = cargar_datos() #almacena los datos devueltos por la función "cargar_datos
 
-# Endpoint para registrar o verificar usuarios
-@app.post("/registro/")
-def registro_usuario(usuario: Usuario):
-    global usuarios_df
+# "Endpoint" (permite a la aplicación interactuar con el servidor) para registrar o verificar usuarios
+@app.post("/registro/") #define lo que sucede cuando se hace una solicitud POST a la ruta registro "registra nuevos usuarios"
+def registro_usuario(usuario: Usuario): #registra nuevos usuarios
+    global usuarios_df #indica que la variable usuarios es accesible desde cualquier parte del código
 
-    # Verificar si el usuario ya existe en el DataFrame
-    if not usuarios_df.empty and usuario.nombre.lower() in usuarios_df['nombre'].str.lower().values:
+    # Verificar si el usuario ya existe en el "DataFrame" (tabla de datos)
+    if not usuarios_df.empty and usuario.nombre.lower() in usuarios_df['nombre'].str.lower().values: #Comprueba si el nombre del usuario (convertido en minúsculas) está en la lista de valores de la columna
         # Si el usuario existe, devolver un mensaje
-        datos_existentes = usuarios_df[usuarios_df['nombre'].str.lower() == usuario.nombre.lower()]
-        return {
-            "mensaje": f"El cliente '{usuario.nombre}' ya se encuentra registrado.",
-            "datos": datos_existentes.to_dict(orient="records")
+        datos_existentes = usuarios_df[usuarios_df['nombre'].str.lower() == usuario.nombre.lower()] #Realiza una comparación de igualdad entre cada valor de la columna "nombre" (en minúsculas) y el nombre del usuario (también en minúsculas).
+        return { #Indica que la función debe devolver un resultado
+            "mensaje": f"El cliente '{usuario.nombre}' ya se encuentra registrado.", #El resultado es una cadena que incluye el valor dinámico de usuario.nombre
+            "datos": datos_existentes.to_dict(orient="records") #convierte un tabla de datos en una lista de diccionarios, donde cada fila es un diccionario.
         }
 
     # Si el usuario no existe, agregarlo al DataFrame
     nuevo_usuario = {
         "nombre": usuario.nombre,
         "edad": usuario.edad,
-        "enfermedades": ",".join(usuario.enfermedades)  # Convertir la lista en una cadena separada por comas
+        "enfermedades": ",".join(usuario.enfermedades)  # convierte una lista de enfermedades almacenada en usuario.enfermedades en una única cadena de texto, donde cada elemento de la lista está separado por una coma.
     }
     # Usar concat() para agregar el nuevo usuario al DataFrame
-    usuarios_df = pd.concat([usuarios_df, pd.DataFrame([nuevo_usuario])], ignore_index=True)
+    usuarios_df = pd.concat([usuarios_df, pd.DataFrame([nuevo_usuario])], ignore_index=True) #agrega un nuevo registro (contenido en el diccionario nuevo_usuario) al DataFrame usuarios_df, asegurando que el índice se actualice automáticamente.
     guardar_datos(usuarios_df)  # Guardar los datos en el archivo Excel
     return {
         "mensaje": f"El cliente '{usuario.nombre}' ha sido registrado exitosamente.",
@@ -182,10 +182,10 @@ def registro_usuario(usuario: Usuario):
     }
 
 # Endpoint para listar todos los usuarios registrados
-@app.get("/usuarios/")
-def listar_usuarios():
-    if usuarios_df.empty:  # Si el DataFrame está vacío
-        return {"mensaje": "No hay usuarios registrados."}
+@app.get("/usuarios/") #devuelve información relacionada con los usuarios
+def listar_usuarios(): # devolver una lista de usuarios típicamente en formato JSON.
+    if usuarios_df.empty:  # Si el DataFrame (tabla de datos) está vacío
+        return {"mensaje": "No hay usuarios registrados."} #devuelme un mensaje
     
     # Convertir el DataFrame a una lista de diccionarios
     usuarios = usuarios_df.to_dict(orient="records")
